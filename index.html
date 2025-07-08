@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create Menu ShopGUI+</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="css/favicon.png" />
+</head>
+<body>
+
+  <h1>Create Menu ShopGUI+</h1>
+  <label for="menuName">Menu Name:</label>
+  <input type="text" id="menuName" placeholder="teste...." value="" />
+  <div style="margin-top: 8px; margin-bottom: 10px; font-family: monospace; display: flex; gap: 8px; flex-wrap: wrap;">
+    <span style="color: #000000;">&0</span>
+    <span style="color: #0000AA;">&1</span>
+    <span style="color: #00AA00;">&2</span>
+    <span style="color: #00AAAA;">&3</span>
+    <span style="color: #AA0000;">&4</span>
+    <span style="color: #AA00AA;">&5</span>
+    <span style="color: #FFAA00;">&6</span>
+    <span style="color: #AAAAAA;">&7</span>
+    <span style="color: #555555;">&8</span>
+    <span style="color: #5555FF;">&9</span>
+    <span style="color: #55FF55;">&a</span>
+    <span style="color: #55FFFF;">&b</span>
+    <span style="color: #FF5555;">&c</span>
+    <span style="color: #FF55FF;">&d</span>
+    <span style="color: #FFFF55;">&e</span>
+    <span style="color: #FFFFFF;">&f</span>
+  </div>
+
+  <div class="inventory-size-wrapper">
+    <label for="inventorySize">Size inventory:</label>
+    <select id="inventorySize">
+      <option value="9">9</option>
+      <option value="18">18</option>
+      <option value="27">27</option>
+      <option value="36">36</option>
+      <option value="45">45</option>
+      <option value="54" selected>54</option>
+    </select>
+  </div>
+
+  <div class="inventory-wrapper">
+    <span id="previewMenuName"></span>
+    <div id="inventory" class="inventory"></div>
+  </div>
+
+  <div class="buttons" style="display: flex; gap: 10px;">
+    <button id="generateBtn">Generate YML</button>
+    <button onclick="downloadYAML()">Download YML</button>
+  </div>
+
+  <pre id="output" class="hidden"></pre>
+
+  <div id="itemPopup" class="popup hidden">
+    <h3>Configurar Item</h3>
+    <label>Material:</label>
+    <input id="material" list="items" placeholder="Polished Diorite" autocomplete="off" />
+    <datalist id="items"></datalist><br />
+    <label>Preço de Compra:</label>
+    <input id="buyPrice" type="number" step="0.01" min="0" /><br />
+    <label>Preço de Venda:</label>
+    <input id="sellPrice" type="number" step="0.01" min="0" /><br />
+    <button onclick="saveItem()">Salvar</button>
+    <button onclick="closePopup()">Cancelar</button>
+  </div>
+
+  <footer>Made by Samk_SPS 😎</footer>
+
+  <script>
+    let slots = [];
+    let selectedSlot = 0;
+    let itemNameMap = {};
+
+    async function loadItems() {
+      const datalist = document.getElementById('items');
+      datalist.innerHTML = '';
+      itemNameMap = {};
+      try {
+        const response = await fetch('https://raw.githubusercontent.com/misode/mcmeta/registries/item/data.json');
+        if (!response.ok) throw new Error('Erro ao carregar itens');
+        const itemsArray = await response.json();
+        itemsArray.forEach(itemId => {
+          itemNameMap[itemId] = {
+            id: itemId,
+            name: itemId.replace(/_/g, ' '),
+            imageURL: getItemImageURL(itemId)
+          };
+          const option = document.createElement('option');
+          option.value = itemId;
+          datalist.appendChild(option);
+        });
+      } catch (error) {
+        alert("Erro ao carregar a lista de itens.");
+      }
+    }
+
+    function getItemImageURL(itemId) {
+      const name = itemId
+      .split('_')
+      .map(w => w.toLowerCase() === 'and' ? 'and' : w.charAt(0).toUpperCase() + w.slice(1))
+      .join('_');
+      return `https://minecraft.wiki/images/Invicon_${name}.png`;
+    }
+
+
+    function renderInventory() {
+      const inventory = document.getElementById('inventory');
+      const size = parseInt(document.getElementById('inventorySize').value);
+      inventory.innerHTML = '';
+      inventory.style.gridTemplateColumns = `repeat(9, 40px)`;
+      const oldSlots = [...slots];
+      slots = Array(size).fill(null);
+      for(let i=0; i<Math.min(size, oldSlots.length); i++) {
+        slots[i] = oldSlots[i];
+      }
+      for(let i=0; i<size; i++) {
+        const div = document.createElement('div');
+        div.className = 'slot';
+        div.dataset.index = i;
+        div.onclick = () => openPopup(i);
+        inventory.appendChild(div);
+        if(slots[i]) updateSlotDisplay(i);
+      }
+    }
+
+    function updateSlotDisplay(index) {
+      const item = slots[index];
+      const slotElement = document.querySelector(`.slot[data-index='${index}']`);
+      if(!slotElement) return;
+      slotElement.innerHTML = '';
+      if(item && item.material) {
+        const img = document.createElement('img');
+        img.src = getItemImageURL(item.material);
+        img.alt = item.material;
+        img.onerror = () => {
+          img.style.display = 'none';
+          const textSpan = document.createElement('span');
+          textSpan.className = 'material-text';
+          textSpan.innerText = item.material.replace(/_/g, ' ');
+          slotElement.appendChild(textSpan);
+        };
+        slotElement.appendChild(img);
+      }
+    }
+
+    function openPopup(index) {
+      selectedSlot = index;
+      document.getElementById('itemPopup').classList.remove('hidden');
+      const currentItem = slots[index];
+      document.getElementById('material').value = currentItem?.material || '';
+      document.getElementById('buyPrice').value = currentItem?.buyPrice || '';
+      document.getElementById('sellPrice').value = currentItem?.sellPrice || '';
+      document.getElementById('material').focus();
+    }
+
+    function closePopup() {
+      document.getElementById('itemPopup').classList.add('hidden');
+    }
+
+    function saveItem() {
+      const rawMaterial = document.getElementById('material').value.trim();
+      const buyPrice = parseFloat(document.getElementById('buyPrice').value);
+      const sellPrice = parseFloat(document.getElementById('sellPrice').value);
+      if(!rawMaterial || !itemNameMap[rawMaterial]) {
+        slots[selectedSlot] = null;
+      } else {
+        slots[selectedSlot] = {
+          material: rawMaterial,
+          buyPrice: isNaN(buyPrice) ? 0 : buyPrice,
+          sellPrice: isNaN(sellPrice) ? 0 : sellPrice,
+          slot: selectedSlot
+        };
+      }
+      updateSlotDisplay(selectedSlot);
+      closePopup();
+    }
+
+    document.getElementById('material').addEventListener('keydown', e => {
+      if(e.key === 'Enter') saveItem();
+    });
+
+    document.getElementById('inventorySize').addEventListener('change', renderInventory);
+
+    function colorizeMinecraftText(input) {
+      const colors = {
+        '0': '#000000','1': '#0000AA','2': '#00AA00','3': '#00AAAA',
+        '4': '#AA0000','5': '#AA00AA','6': '#FFAA00','7': '#AAAAAA',
+        '8': '#555555','9': '#5555FF','a': '#55FF55','b': '#55FFFF',
+        'c': '#FF5555','d': '#FF55FF','e': '#FFFF55','f': '#FFFFFF',
+        'l': 'font-weight:bold','n': 'text-decoration:underline',
+        'o': 'font-style:italic','m': 'text-decoration:line-through',
+        'r': 'reset'
+      };
+      let output = '', currentStyles = [];
+      for (let i = 0; i < input.length; i++) {
+        if (input[i] === '&' && i + 1 < input.length) {
+          const code = input[++i].toLowerCase();
+          if (code === 'r') {
+            output += '</span>';
+            currentStyles = [];
+            continue;
+          }
+          const style = colors[code];
+          if (!style) continue;
+          const css = style.startsWith('#') ? `color:${style}` : style;
+          output += `<span style="${css}">`;
+          currentStyles.push(code);
+        } else {
+          output += input[i];
+        }
+      }
+      while (currentStyles.length > 0) {
+        output += '</span>';
+        currentStyles.pop();
+      }
+      return output;
+    }
+
+    const menuNameInput = document.getElementById('menuName');
+    const preview = document.getElementById('previewMenuName');
+    menuNameInput.addEventListener('input', () => {
+      const inputValue = menuNameInput.value || 'Criador ShopGUI+';
+      preview.innerHTML = colorizeMinecraftText(inputValue);
+    });
+
+    async function generateYAML() {
+      const output = document.getElementById('output');
+      output.classList.remove('hidden'); 
+
+      let rawMenuName = document.getElementById('menuName').value || 'menu';
+
+      const yamlKeyName = rawMenuName.replace(/&[0-9a-fk-or]/gi, '').replace(/\s+/g, '_').toLowerCase();
+
+      let yaml = `${yamlKeyName}:\n  name: "${rawMenuName} (page %page%)"\n  size: ${slots.length}\n  fillItem:\n    material: BLACK_STAINED_GLASS_PANE\n    name: " "\n  items:`;
+
+      let count = 1;
+      for(let i=0; i<slots.length; i++) {
+        const item = slots[i];
+        if(item) {
+          yaml += `\n    ${count}:\n      type: item\n      item:\n        material: ${item.material.toUpperCase()}\n        quantity: 1\n      buyPrice: ${item.buyPrice}\n      sellPrice: ${item.sellPrice}\n      slot: ${item.slot}`;
+          count++;
+        }
+      }
+      output.innerText = yaml;
+
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(yaml);
+        alert("YAML copiado para a área de transferência!");
+      }
+      output.focus();
+      document.execCommand('selectAll');
+    }
+
+
+    function downloadYAML() {
+      generateYAML();
+      const yamlText = document.getElementById('output').innerText;
+      const menuName = document.getElementById('menuName').value.trim().replace(/\s+/g, '_').toLowerCase() || 'menu';
+      const blob = new Blob([yamlText], { type: 'text/yaml' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${menuName}.yml`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    document.getElementById('generateBtn').addEventListener('click', generateYAML);
+    renderInventory();
+    loadItems();
+  </script>
+
+</body>
+</html>
