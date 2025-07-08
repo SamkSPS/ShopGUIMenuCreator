@@ -20,6 +20,7 @@ A modern and interactive web-based tool for creating ShopGUI+ menus for Minecraf
 
 ## How to Use
 
+Link: https://samksps.github.io/ShopGUIMenuCreator/
 1. Open `index.html` in your browser.
 2. Set the menu name and inventory size.
 3. Click on slots to configure items.
