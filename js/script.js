@@ -52,7 +52,7 @@ function renderInventory() {
 
     const item = slots[currentPage]?.[i];
     if (item && item.material) {
-      item.material = item.material.toLowerCase()
+      item.material = item.material.toLowerCase();
       const img = document.createElement('img');
       img.alt = item.material;
       console.log(item.material);
