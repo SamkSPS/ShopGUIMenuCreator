@@ -88,7 +88,7 @@ function openPopup(slot) {
 }
 
 function saveItem() {
-  const material = document.getElementById('material').value;
+  const material = document.getElementById('material').value.toLowerCase();
   const buyPrice = parseFloat(document.getElementById('buyPrice').value);
   const sellPrice = parseFloat(document.getElementById('sellPrice').value);
 
