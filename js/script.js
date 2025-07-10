@@ -40,7 +40,7 @@ function renderInventory() {
   const inventorySize = parseInt(document.getElementById('inventorySize').value);
   inventoryDiv.style.gridTemplateColumns = `repeat(9, 40px)`;
   inventoryDiv.style.gridTemplateRows = `repeat(${inventorySize / 9}, 40px)`;
-  document.getElementById('pageCounter').innerText = `Página ${currentPage}`;
+  document.getElementById('pageCounter').innerText = `Page ${currentPage}`;
 
   ensurePage(currentPage);
 
