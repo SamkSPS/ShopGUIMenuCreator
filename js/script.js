@@ -60,7 +60,7 @@ function renderInventory() {
       const img = document.createElement('img');
       img.alt = item.material;
       
-      img.src = getItemImageURL(item.material);
+      img.src = getItemImageURL(item.material.toLowerCase());
       
       const itemMaterialRef = item.material;
 
