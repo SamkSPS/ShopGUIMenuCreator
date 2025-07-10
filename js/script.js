@@ -31,11 +31,6 @@ async function loadItems() {
 }
 
 function getItemImageURL(itemId) {
-  const name = itemId
-    .split('_')
-    .map(w => w.toLowerCase() === 'and' ? 'and' : w.charAt(0).toUpperCase() + w.slice(1))
-    .join('_');
-    
   return `assets/imgs/${itemId}.png`;
 }
 
@@ -57,10 +52,11 @@ function renderInventory() {
 
     const item = slots[currentPage]?.[i];
     if (item && item.material) {
+      item.material = item.material.toLowerCase()
       const img = document.createElement('img');
       img.alt = item.material;
-      
-      img.src = getItemImageURL(item.material.toLowerCase());
+      console.log(item.material);
+      img.src = getItemImageURL(item.material);
       
       const itemMaterialRef = item.material;
 
@@ -88,7 +84,7 @@ function openPopup(slot) {
 }
 
 function saveItem() {
-  const material = document.getElementById('material').value.toLowerCase();
+  const material = document.getElementById('material').value;
   const buyPrice = parseFloat(document.getElementById('buyPrice').value);
   const sellPrice = parseFloat(document.getElementById('sellPrice').value);
 
