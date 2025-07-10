@@ -57,7 +57,7 @@
   </div>
   <div class="page-navigation">
     <button id="prevPage">⬅</button>
-    <span class="page-counter" id="pageCounter">Página 1</span>
+    <span class="page-counter" id="pageCounter">Page 1</span>
     <button id="nextPage">➡</button>
   </div>
 
@@ -67,25 +67,24 @@
   </div>
 
   <div class="file-upload" style="margin-top: 20px;">
-      <label for="yamlFile">Carregar arquivo YAML:</label>
+      <label for="yamlFile">Load file YML:</label>
       <input type="file" id="yamlFile" accept=".yml,.yaml" />
-      <button id="loadYamlBtn">Carregar YAML</button>
+      <button id="loadYamlBtn">Load YML</button>
   </div>
   <pre id="output" class="hidden"></pre>
 
   <div id="itemPopup" class="popup hidden">
     <button id="closePopupBtn" style="float:right;">X</button>
-    <h3>Configurar Item</h3>
+    <h3>Config Item</h3>
     <label>Material:</label>
     <input id="material" list="items" placeholder="Polished Diorite" autocomplete="off" />
     <datalist id="items"></datalist><br />
-    <label>Preço de Compra:</label>
+    <label>Buy price:</label>
     <input id="buyPrice" type="number" step="0.01" value="0" /><br />
-    <label>Preço de Venda:</label>
+    <label>Sell price:</label>
     <input id="sellPrice" type="number" step="0.01" value="0" /><br />
-    <button id="saveItemBtn">Salvar</button>
-    <button id="deleteItemBtn">Excluir</button>
-    <button id="closePopupBtn">Fechar</button>
+    <button id="saveItemBtn">Save</button>
+    <button id="deleteItemBtn">Delete</button>
   </div>
 
   <footer>Made by Samk_SPS 😎</footer>
