@@ -55,7 +55,6 @@ function renderInventory() {
       item.material = item.material.toLowerCase();
       const img = document.createElement('img');
       img.alt = item.material;
-      console.log(item.material);
       img.src = getItemImageURL(item.material);
       
       const itemMaterialRef = item.material;
@@ -77,28 +76,65 @@ function renderInventory() {
 function openPopup(slot) {
   selectedSlot = slot;
   const item = slots[currentPage]?.[selectedSlot];
-  document.getElementById('material').value = item ? item.material : '';
-  document.getElementById('buyPrice').value = item ? item.buyPrice : 0;
-  document.getElementById('sellPrice').value = item ? item.sellPrice : 0;
+  
+  const materialInput = document.getElementById('material');
+  const buyPriceInput = document.getElementById('buyPrice');
+  const sellPriceInput = document.getElementById('sellPrice');
+  const enableBuyCheckbox = document.getElementById('enableBuyPrice');
+  const enableSellCheckbox = document.getElementById('enableSellPrice');
+
+  materialInput.value = item ? item.material : '';
+
+  // Verifica se o buyPrice existe e não é nulo/undefined
+  if (item && item.buyPrice !== undefined) {
+    enableBuyCheckbox.checked = true;
+    buyPriceInput.disabled = false;
+    buyPriceInput.value = item.buyPrice;
+  } else {
+    enableBuyCheckbox.checked = false;
+    buyPriceInput.disabled = true;
+    buyPriceInput.value = 0;
+  }
+
+  // Verifica se o sellPrice existe e não é nulo/undefined
+  if (item && item.sellPrice !== undefined) {
+    enableSellCheckbox.checked = true;
+    sellPriceInput.disabled = false;
+    sellPriceInput.value = item.sellPrice;
+  } else {
+    enableSellCheckbox.checked = false;
+    sellPriceInput.disabled = true;
+    sellPriceInput.value = 0;
+  }
+
   document.getElementById('itemPopup').classList.remove('hidden');
 }
 
 function saveItem() {
   const material = document.getElementById('material').value;
-  const buyPrice = parseFloat(document.getElementById('buyPrice').value);
-  const sellPrice = parseFloat(document.getElementById('sellPrice').value);
-
-  console.log('Material existe no itemNameMap?', !!itemNameMap[material]);
+  const enableBuyCheckbox = document.getElementById('enableBuyPrice');
+  const enableSellCheckbox = document.getElementById('enableSellPrice');
 
   if (material && itemNameMap[material]) {
     ensurePage(currentPage);
+    
+    const buyPrice = enableBuyCheckbox.checked ? parseFloat(document.getElementById('buyPrice').value) : undefined;
+    const sellPrice = enableSellCheckbox.checked ? parseFloat(document.getElementById('sellPrice').value) : undefined;
+
     slots[currentPage][selectedSlot] = {
       material: material,
-      buyPrice: buyPrice,
-      sellPrice: sellPrice,
       slot: selectedSlot,
       page: currentPage
     };
+
+    // Adiciona os preços apenas se os checkboxes estiverem marcados
+    if (buyPrice !== undefined) {
+        slots[currentPage][selectedSlot].buyPrice = buyPrice;
+    }
+    if (sellPrice !== undefined) {
+        slots[currentPage][selectedSlot].sellPrice = sellPrice;
+    }
+
   } else {
     console.warn(`Material '${material}' não encontrado na base de dados de itens. Removendo item do slot.`);
     alert(`Material '${material}' inválido. Por favor, digite um ID de item do Minecraft válido (ex: STONE, OAK_PLANKS). O item foi removido do slot.`);
@@ -185,7 +221,6 @@ async function generateYAML() {
   const rawMenuName = document.getElementById('menuName').value.trim();
   
   const cleanMenuNameForYamlKey = rawMenuName.replace(/&[0-9a-fk-or]/gi, '').replace(/\"/g, '');
-  // *** LINHA CORRIGIDA AQUI: Ordem dos replaces para espaços e caracteres inválidos ***
   const yamlKeyName = cleanMenuNameForYamlKey.toLowerCase().replace(/ /g, '_').replace(/[^a-z0-9_]/g, '') || 'menu';
 
   const inventorySize = parseInt(document.getElementById('inventorySize').value);
@@ -208,10 +243,16 @@ async function generateYAML() {
       type: item
       item:
         material: ${item.material.toUpperCase()}
-        quantity: 1
-      buyPrice: ${item.buyPrice}
-      sellPrice: ${item.sellPrice}
-      slot: ${item.slot}`;
+        quantity: 1`;
+        // Adiciona buyPrice apenas se ele existir no objeto do item
+        if (item.buyPrice !== undefined) {
+            yaml += `\n      buyPrice: ${item.buyPrice}`;
+        }
+        // Adiciona sellPrice apenas se ele existir no objeto do item
+        if (item.sellPrice !== undefined) {
+            yaml += `\n      sellPrice: ${item.sellPrice}`;
+        }
+        yaml += `\n      slot: ${item.slot}`;
         if (page > 1) yaml += `\n      page: ${page}`;
         count++;
       }
@@ -242,7 +283,6 @@ function downloadYAML() {
   URL.revokeObjectURL(a.href);
 }
 
-
 document.getElementById('loadYamlBtn').addEventListener('click', loadYAMLFile);
 
 async function loadYAMLFile() {
@@ -271,6 +311,8 @@ async function loadYAMLFile() {
           const page = item.page || 1;
           ensurePage(page);
           if (item.slot !== undefined && item.item && item.item.material) {
+            // A lógica de `buyPrice` e `sellPrice` aqui já funciona,
+            // pois se não existirem no YAML, serão `undefined` no objeto `item`.
             slots[page][item.slot] = {
               material: item.item.material,
               buyPrice: item.buyPrice,
@@ -410,6 +452,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('nextPage').addEventListener('click', nextPage);
 
   document.getElementById('generateBtn').addEventListener('click', generateYAML);
+
+  // NOVO: Adiciona listeners para os checkboxes habilitarem/desabilitarem os inputs
+  document.getElementById('enableBuyPrice').addEventListener('change', (e) => {
+    document.getElementById('buyPrice').disabled = !e.target.checked;
+  });
+
+  document.getElementById('enableSellPrice').addEventListener('change', (e) => {
+    document.getElementById('sellPrice').disabled = !e.target.checked;
+  });
 
   document.getElementById('menuName').dispatchEvent(new Event('input'));
 });

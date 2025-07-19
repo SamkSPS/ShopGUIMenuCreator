@@ -73,16 +73,25 @@
   </div>
   <pre id="output" class="hidden"></pre>
 
-  <div id="itemPopup" class="popup hidden">
+<div id="itemPopup" class="popup hidden">
     <button id="closePopupBtn" style="float:right;">X</button>
     <h3>Config Item</h3>
     <label>Material:</label>
-    <input id="material" list="items" placeholder="Polished Diorite" autocomplete="off" />
+    <input id="material" list="items" placeholder="STONE" autocomplete="off" />
     <datalist id="items"></datalist><br />
-    <label>Buy price:</label>
-    <input id="buyPrice" type="number" step="0.01" value="0" /><br />
-    <label>Sell price:</label>
-    <input id="sellPrice" type="number" step="0.01" value="0" /><br />
+    
+    <div>
+      <label for="enableBuyPrice">Buy price:</label>
+      <input id="buyPrice" type="number" step="0.01" value="0" />
+      <input type="checkbox" id="enableBuyPrice" checked><br/>
+    </div>
+
+    <div>
+      <label for="enableSellPrice">Sell price:</label>
+      <input id="sellPrice" type="number" step="0.01" value="0" />
+      <input type="checkbox" id="enableSellPrice" checked><br/>
+    </div>
+
     <button id="saveItemBtn">Save</button>
     <button id="deleteItemBtn">Delete</button>
   </div>
