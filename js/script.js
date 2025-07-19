@@ -2,6 +2,7 @@ let slots = {};
 let selectedSlot = 0;
 let currentPage = 1;
 let itemNameMap = {};
+let isDragging = false;
 
 function ensurePage(page) {
   if (!slots[page]) slots[page] = Array(54).fill(null);
@@ -48,10 +49,18 @@ function renderInventory() {
     const slotDiv = document.createElement('div');
     slotDiv.classList.add('slot');
     slotDiv.dataset.slot = i;
+    
+    slotDiv.addEventListener('dragover', dragOver);
+    slotDiv.addEventListener('drop', drop);
+
     slotDiv.addEventListener('click', () => openPopup(i));
 
     const item = slots[currentPage]?.[i];
     if (item && item.material) {
+      slotDiv.draggable = true;
+      slotDiv.addEventListener('dragstart', dragStart);
+      slotDiv.addEventListener('dragend', dragEnd);
+
       item.material = item.material.toLowerCase();
       const img = document.createElement('img');
       img.alt = item.material;
@@ -73,6 +82,7 @@ function renderInventory() {
   }
 }
 
+
 function openPopup(slot) {
   selectedSlot = slot;
   const item = slots[currentPage]?.[selectedSlot];
@@ -85,7 +95,6 @@ function openPopup(slot) {
 
   materialInput.value = item ? item.material : '';
 
-  // Verifica se o buyPrice existe e não é nulo/undefined
   if (item && item.buyPrice !== undefined) {
     enableBuyCheckbox.checked = true;
     buyPriceInput.disabled = false;
@@ -96,7 +105,6 @@ function openPopup(slot) {
     buyPriceInput.value = 0;
   }
 
-  // Verifica se o sellPrice existe e não é nulo/undefined
   if (item && item.sellPrice !== undefined) {
     enableSellCheckbox.checked = true;
     sellPriceInput.disabled = false;
@@ -127,7 +135,6 @@ function saveItem() {
       page: currentPage
     };
 
-    // Adiciona os preços apenas se os checkboxes estiverem marcados
     if (buyPrice !== undefined) {
         slots[currentPage][selectedSlot].buyPrice = buyPrice;
     }
@@ -244,11 +251,9 @@ async function generateYAML() {
       item:
         material: ${item.material.toUpperCase()}
         quantity: 1`;
-        // Adiciona buyPrice apenas se ele existir no objeto do item
         if (item.buyPrice !== undefined) {
             yaml += `\n      buyPrice: ${item.buyPrice}`;
         }
-        // Adiciona sellPrice apenas se ele existir no objeto do item
         if (item.sellPrice !== undefined) {
             yaml += `\n      sellPrice: ${item.sellPrice}`;
         }
@@ -311,8 +316,6 @@ async function loadYAMLFile() {
           const page = item.page || 1;
           ensurePage(page);
           if (item.slot !== undefined && item.item && item.item.material) {
-            // A lógica de `buyPrice` e `sellPrice` aqui já funciona,
-            // pois se não existirem no YAML, serão `undefined` no objeto `item`.
             slots[page][item.slot] = {
               material: item.item.material,
               buyPrice: item.buyPrice,
@@ -396,7 +399,6 @@ function parseSimpleYAML(yamlString) {
                 if (trimmedLine === 'type: item') {
                     currentItemObject.type = 'item';
                 } else if (trimmedLine === 'item:') {
-                    // Esta é apenas uma marca para propriedades aninhadas de 'item', não processa valor
                 } else {
                     let propMatch = trimmedLine.match(/^(buyPrice|sellPrice|slot|page):\s*(.*)$/);
                     if (propMatch) {
@@ -453,7 +455,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('generateBtn').addEventListener('click', generateYAML);
 
-  // NOVO: Adiciona listeners para os checkboxes habilitarem/desabilitarem os inputs
   document.getElementById('enableBuyPrice').addEventListener('change', (e) => {
     document.getElementById('buyPrice').disabled = !e.target.checked;
   });
@@ -463,4 +464,66 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('menuName').dispatchEvent(new Event('input'));
+
+  const trashCan = document.getElementById('trashCan');
+  trashCan.addEventListener('dragover', dragOver);
+  trashCan.addEventListener('drop', drop);
 });
+
+function dragStart(event) {
+  const sourceSlot = event.target.closest('.slot').dataset.slot;
+  event.dataTransfer.setData('text/plain', sourceSlot);
+  event.dataTransfer.effectAllowed = 'move';
+
+  document.getElementById('trashCan').classList.remove('hidden');
+  isDragging = true;
+}
+
+function dragOver(event) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+}
+
+function drop(event) {
+  event.preventDefault();
+  
+  document.getElementById('trashCan').classList.add('hidden');
+  isDragging = false;
+
+  const sourceSlotIndex = parseInt(event.dataTransfer.getData('text/plain'), 10);
+  
+  if (event.target.closest('#trashCan')) {
+      ensurePage(currentPage);
+      slots[currentPage][sourceSlotIndex] = null;
+      renderInventory();
+      return;
+  }
+
+  const destinationSlotTarget = event.target.closest('.slot');
+  if (!destinationSlotTarget) return;
+  const destinationSlotIndex = parseInt(destinationSlotTarget.dataset.slot, 10);
+
+  if (sourceSlotIndex === destinationSlotIndex) {
+    return;
+  }
+
+  const sourceItem = slots[currentPage][sourceSlotIndex];
+  const destinationItem = slots[currentPage][destinationSlotIndex];
+
+  slots[currentPage][sourceSlotIndex] = destinationItem;
+  slots[currentPage][destinationSlotIndex] = sourceItem;
+
+  if (sourceItem) {
+    sourceItem.slot = destinationSlotIndex;
+  }
+  if (destinationItem) {
+    destinationItem.slot = sourceSlotIndex;
+  }
+  
+  renderInventory();
+}
+
+function dragEnd(event) {
+    document.getElementById('trashCan').classList.add('hidden');
+    isDragging = false;
+}
