@@ -8,6 +8,29 @@ body {
   flex-direction: column;
 }
 
+#trashCan {
+    border: 2px dashed #ff0000;
+    background-color: #ffe0e0;
+    padding: 10px;
+    text-align: center;
+    margin-top: 20px;
+    display: flex; /* Use flexbox for centering content */
+    flex-direction: column; /* Stack image and text vertically */
+    align-items: center; /* Center horizontally */
+    justify-content: center; /* Center vertically */
+    color: #cc0000;
+    font-weight: bold;
+    border-radius: 8px;
+    height: 100px; /* Adjust height as needed */
+    width: 200px; /* Adjust width as needed */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#trashCan.hidden {
+    display: none;
+}
+
 #menuName {
   text-align: center;
 }

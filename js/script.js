@@ -50,6 +50,7 @@ function renderInventory() {
     slotDiv.classList.add('slot');
     slotDiv.dataset.slot = i;
     
+    // Adiciona os listeners de drop a TODOS os slots
     slotDiv.addEventListener('dragover', dragOver);
     slotDiv.addEventListener('drop', drop);
 
@@ -465,6 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('menuName').dispatchEvent(new Event('input'));
 
+  // Add drag and drop listeners for the trash can
   const trashCan = document.getElementById('trashCan');
   trashCan.addEventListener('dragover', dragOver);
   trashCan.addEventListener('drop', drop);
@@ -488,7 +490,7 @@ function drop(event) {
   event.preventDefault();
   
   document.getElementById('trashCan').classList.add('hidden');
-  isDragging = false;
+  isDragging = false; 
 
   const sourceSlotIndex = parseInt(event.dataTransfer.getData('text/plain'), 10);
   
@@ -496,7 +498,7 @@ function drop(event) {
       ensurePage(currentPage);
       slots[currentPage][sourceSlotIndex] = null;
       renderInventory();
-      return;
+      return; 
   }
 
   const destinationSlotTarget = event.target.closest('.slot');
